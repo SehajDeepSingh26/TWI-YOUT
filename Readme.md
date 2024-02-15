@@ -17,4 +17,9 @@
     npm i cookie-parser
     npm i cors
 
+    npm i mongoose-aggregate-paginate-v2    // for using aggregate functions like count,limit,totalpages. 
+    
+    npm i jsonwebtoken      // To create tokens and encryption
+    npm i bcrypt            // To hash passwords
+
     
