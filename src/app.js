@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser"
 
 const app = express();
 
-app.use(cors({      //^ to accept and forward data from frontend to backend
+app.use(c ors({      //^ to accept and forward data from frontend to backend
     origin: process.env.CORS_ORIGIN,
     credentials: true
 }))

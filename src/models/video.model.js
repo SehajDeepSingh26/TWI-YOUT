@@ -2,14 +2,14 @@ import mongoose from "mongoose"
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
 
 const videoSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-        index: true,     //^ Used for efficient searching, so when an attribute will get searched more, we should enable the indexing,
-    },
+    // id: {
+    //     type: String,
+    //     required: true,
+    //     unique: true,
+    //     lowercase: true,
+    //     trim: true,
+    //     index: true,     //^ Used for efficient searching, so when an attribute will get searched more, we should enable the indexing,
+    // },
     videoFile: {
         type: String,   //cloudinary url
         required: true,
@@ -34,7 +34,7 @@ const videoSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    isViews: {
+    Views: {
         type: Number,
         default: 0
     },

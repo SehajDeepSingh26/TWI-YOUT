@@ -22,4 +22,4 @@
     npm i jsonwebtoken      // To create tokens and encryption
     npm i bcrypt            // To hash passwords
 
-    
+    npm i cloudinary        // To store images/ videos/ files    
