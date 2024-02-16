@@ -1,10 +1,10 @@
-const express = require('express');
+import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
 const app = express();
 
-app.use(c ors({      //^ to accept and forward data from frontend to backend
+app.use(cors({      //^ to accept and forward data from frontend to backend
     origin: process.env.CORS_ORIGIN,
     credentials: true
 }))
@@ -20,6 +20,12 @@ app.use( express.static( "public" ) )
 
 app.use(cookieParser());
 
+import userRouter from "./routes/user.routes.js"
+
+//routes declaration
+app.use("/api/v1/user", userRouter)    //^ when client goes to /users, we give control to UserRouter.js file to do task
+                                //* https:localhost:8080/users
+//^ we cannot use app.get directly here, because we are writing routes in different place.
 
 
 
