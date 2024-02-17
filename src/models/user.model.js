@@ -55,8 +55,8 @@ userSchema.pre("save", async function(next){
     if(!this.isModified("password")) 
         return next()   //^ i.e if password is not changed, bcrypt will not hash this password everytime.
 
-    this.password = bcrypt.hash(this.password, 10)      //^ to hash the password with 10 number of rounds
-    next()      //^ always called when dealing with middlewares
+    this.password = await bcrypt.hash(this.password, 10)      //^ to hash the password with 10 number of rounds
+    next()      //^ next() is always called when dealing with middlewares
 })
 
 userSchema.methods.isCorrectPassword = async function(password){
