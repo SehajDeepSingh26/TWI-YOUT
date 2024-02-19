@@ -1,5 +1,6 @@
+
 class ApiResponse{
-    contructor(
+    constructor(
         statusCode,
         data,
         message = "Success"

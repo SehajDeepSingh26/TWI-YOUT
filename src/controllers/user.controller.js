@@ -1,21 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
-import {User} from "../models/user.model.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {ApiError} from "../utils/ApiError.js"
+import { User} from "../models/user.model.js"
+import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-const generateAccessAndRefreshToken = async(userId) => {
-    try {
-        const user = await User.findOne(userId);
-        const accessToen = user.generateAccessToken
-        const refreshToken = user.generateRefreshToken
-    } catch (error) {
-        throw new ApiError(500, "Something went wrong while generating Refresh and Access Token")
-    }
-}
-
-const registerUser = asyncHandler( async (req, res ) => {
-
+const registerUser = asyncHandler( async (req, res) => {
+    
     // & STEPS to be followed for REGISTER of a new user
     //^  1. Deconstruct the request obj;
     //^  2. check if all the required properties are provided and valid
@@ -27,30 +17,33 @@ const registerUser = asyncHandler( async (req, res ) => {
     //^  8. Check createdUser
     //^  9. return a response with status code, token using the methods we defined in the model file and a user object for the frontend to work with.
 
+
     //~ STEP 1:
-    const {fullName, email, password, userName} = req.body
-    console.log(email)
+    const {fullName, email, username, password } = req.body
+    //console.log("email: ", email);
 
     //~ STEP 2
     // if(fullName === ""){
     //     throw new ApiError(400, "fullName not found")
     // }          //^ we can write many if-else conditions to check and validate the details.
-
-    //^  Shortcut
-    if(
-        [fullName, email, password, userName].some((field) => field?.trim() === "" ))
-    {
-        throw new ApiError(404, "All fields are required")
+    
+    //^  SHORTCUT
+    if (
+        [fullName, email, username, password].some((field) => field?.trim() === "")
+    ) {
+        throw new ApiError(400, "All fields are required")
     }
 
     //~ STEP 3:
     const existedUser = await User.findOne({
-        $or: [{userName}, {email}]
+        $or: [{ username }, { email }]
     })
-    if(existedUser){
+
+    if (existedUser) {
         throw new ApiError(409, "User with email or username already exists")
     }
-    
+    //console.log(req.files);
+
     //~ STEP 4
     const avatarLocalImage = req.files?.avatar[0]?.path
     let coverImageLocalPath;
@@ -69,37 +62,36 @@ const registerUser = asyncHandler( async (req, res ) => {
     if(!avatar){
         throw new ApiError(404, "Avatar not found, is required")
     }
+   
+    // console.log(username)
     //~ STEP 6
     const user = await User.create({
         fullName,
-        avatar: avatar.url,      //^ we are using .url here, because cloudinary is returning full response, but we need just url to store in database.
-        coverImage: coverImage?.url || "",     //^ we have to check if coverImage is present or not, and if present store url of it.
-        email,
+        avatar: avatar.url,       //^ we are using .url here, because cloudinary is returning full response, but we need just url to store in database.
+        coverImage: coverImage?.url || "",      //^ we have to check if coverImage is present or not, and if present store url of it.
+        email, 
         password,
-        userName
+        username: username.toLowerCase()
     })
-    console.log(req.files)
+    // console.log(req.files)
 
     //~ STEP 7
+
     const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken"       //^ password and RefreshToken will be removed from the database.
+        "-password -refreshToken"            //^ password and RefreshToken will be removed from the database.
     )
 
     //~ STEP 8
-    if(!createdUser){
-        throw new ApiError(500, "Something went wrong while registering the User, try again")
+    if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering the user")
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered successfully")
+        new ApiResponse(200, createdUser, "User registered Successfully")
     )
 
-
-    // res.status(200).json({
-    //     message: "ok"
-    // })
-    console.log("in user controlller")
 } )
+
 
 const loginUser = asyncHandler(async (req, res) =>{
 
@@ -130,4 +122,7 @@ const loginUser = asyncHandler(async (req, res) =>{
     }
 })
 
-export { registerUser, loginUser}
+export {
+    registerUser,
+    loginUser
+}

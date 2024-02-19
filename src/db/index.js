@@ -15,8 +15,6 @@ const connectDB = async() =>{
 export default connectDB
 
 
-
-
 /* Two important points about database connectivity: 
 
     1. When connecting to databases, handling potential data-not-found scenarios is essential. Employ try/catch blocks or promises to manage errors or we can also use promises.

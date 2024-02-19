@@ -1,6 +1,7 @@
-/node-modules
+/.vscode
+/node_modules
+./dist
+
 *.env
 .env
-env.*
-readme.md
-./dist
+.env.*

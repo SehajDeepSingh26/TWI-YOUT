@@ -1,1 +1,1 @@
-export const DB_NAME = "TWI-YOUT"
+export const DB_NAME = "YOU-TTER"
