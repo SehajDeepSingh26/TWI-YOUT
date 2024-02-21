@@ -115,7 +115,6 @@ const registerUser = asyncHandler( async (req, res) => {
 
 } )
 
-
 const loginUser = asyncHandler(async (req, res) =>{
 
     //& STEPS for Login by the user
@@ -126,9 +125,9 @@ const loginUser = asyncHandler(async (req, res) =>{
     //^ access and refresh token
     //^ send cookies
     
-    // console.log(req.body)
+    console.log(req.body)
     const {email, username, password} = req.body
-    // console.log(email);
+    console.log(email);
 
     if (!username && !email) {
         throw new ApiError(400, "username or email is required")
@@ -138,7 +137,7 @@ const loginUser = asyncHandler(async (req, res) =>{
             $or: [{username, email}]
         }
     )
-        console.log(user)
+    console.log(user)
     if(!user){
         throw new ApiError(404, "No user found")
     }
@@ -172,40 +171,95 @@ const loginUser = asyncHandler(async (req, res) =>{
 
 })
 
-    const logoutUser = asyncHandler(async (req,res) => {
-        //^ STEPS: remove accessToken and refreshToken and remove cookies
-        //^ We have req.user's access as well, as we passed a middleware called verifyJWT, which returns user.
+const logoutUser = asyncHandler(async (req,res) => {
+    //^ STEPS: remove accessToken and refreshToken and remove cookies
+    //^ We have req.user's access as well, as we passed a middleware called verifyJWT, which returns user.
+    //^ so we donot need to pass user details in body of postman while sending request
 
-        //~ User.findById can be used,--> bring user, then delete its refresh token, save and then validateBeforeFalse have to be done.
-        //~better approach->
-        await User.findByIdAndUpdate(
-            req.user._id,
-            {
-                $set:{
-                    refreshToken: undefined
-                }
-            },
-            {
-                new: true       //^ return response with updated value
+    //~ User.findById can be used,--> bring user, then delete its refresh token, save and then validateBeforeFalse have to be done.
+    //~better approach->
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set:{
+                refreshToken: undefined
             }
-        )
-        const options = {
-            httpsOnly: true,        
-            secure: true            
+        },
+        {
+            new: true       //^ return response with updated value
         }
+    )
+    const options = {
+        httpsOnly: true,        
+        secure: true            
+    }
 
-        return res
-        .status(200)
-        .clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options)
-        .json(
-            new ApiResponse(200, {}, "User Logged-Out")
-        )
-        
-    })
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+        new ApiResponse(200, {}, "User Logged-Out")
+    )
+    
+})
+
+const refreshAccessToken = asyncHandler(async(req,res) => {
+        //^ During login we generate 2 tokens 1) access-token 2) refresh token
+        //^ We save refresh-token in DB and set access-token and refresh-token cookie in chrome
+        //^ Access-token is for short time and refresh-token is for long time
+        //^ When user access-token is expired it send refresh token to Back-end
+        //^ Back-end checks if DB refresh-token and user refresh-token is same or not 
+        //^ If same, it generates both token again and repeat process of saving RT in Db and set cookie with RT and AT
+
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+        if(!incomingRefreshToken)
+            throw new ApiError(401, "unauthorized request")
+
+        try {
+            const decodedToken = jwt.verify(
+                incomingRefreshToken,
+                process.env.REFRESH_TOKEN_SECRET
+            )
+    
+            const user = await User.findById(decodedToken?.id)
+            if(!user)
+                throw new ApiError(401, "Invalid Refresh Token")
+    
+            if(incomingRefreshToken !== User?.refreshToken)
+                throw new ApiError(401, "Refresh token is expired or used")
+            
+            const options = {
+                httpOnly: true,
+                secure: true
+            }
+            
+            const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+    
+            return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    {
+                        accessToken, refreshToken: newRefreshToken
+                    }, 
+                    "Access Token Refreshed"
+                )
+            )
+        } catch (error) {
+            throw new ApiError(error?.message || "invalid refreshToken")
+        }
+    
+    
+})
 
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }
