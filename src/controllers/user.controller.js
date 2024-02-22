@@ -257,9 +257,130 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
     
 })
 
+const changecurrentPassword = asyncHandler(async(req, res) => { 
+    //^ We do not need to think about login of user, as we can ensure that while configuring routes using jwt middleware.
+
+    const {oldPassword, newPassword} = req.body
+
+    //^ As we know user is logged in via auth middleware, we have acces to user._id from auth middleware.
+    const user = await User.findById(req.user?._id)
+    const isPasswordCorrect = user.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid old password")
+    }
+
+    user.password = newPassword
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, "New password changed successfully !")
+    )
+
+})
+
+const getCurrentUser = asyncHandler(async(req, res) => {
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, req.user, "current user fetched successfully")
+    )
+})
+
+const updateAccountDetails = asyncHandler(async(req, res) => {
+    const {fullName, email} = req.body
+    if(!fullName || !email) {
+        throw new ApiError(400, "All fields are required")
+    }
+    const user = User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName: fullName,
+                email: email
+            }
+        },
+        {new: true}
+
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User Details Updated successfully"))
+
+})
+
+const updateUserAvatar = asyncHandler(async(req, res) => {
+    //& STEPS:
+    //^ 1. Taking the new Avatar Image from the inserted middlware multer requests.files and validate
+    //^ 2. upload on the server locally
+    //^ 3. delete the cloudinary url which is store in the User.avatar field
+    //^ 4. uploading new avatar ( received ) image on the cloudinary and take the url from the cloudinary and then updating the user.avatar filed in the database
+
+    const avatarLocalPath = req.file?.path         
+        // above (while registering) req.files was used to get multiple(avatar, coverImage), here no need
+    if(!avatarLocalPath)
+        throw new ApiError(401, "missing avatar file")
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    if(!avatar.url)
+        throw new ApiError(401, "Error while uploading avatar")
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200, user, "User Avatar updated"
+    ))
+})
+
+const updateUserCoverImage = asyncHandler(async(req, res) => {
+
+    const coverImageLocalPath = req.file?.path         
+        // above(while registering) req.files was used to get multiple(avatar, coverImage), here no need
+    if(!coverImageLocalPath)
+        throw new ApiError(401, "missing coverImage file")
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    if(!coverImage.url)
+        throw new ApiError(401, "Error while uploading cover Image")
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200, user, "Cover image updated"
+    ))
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changecurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage
 }
