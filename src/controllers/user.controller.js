@@ -182,8 +182,8 @@ const logoutUser = asyncHandler(async (req,res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshToken: undefined
+            $unset:{
+                refreshToken: 1     //removes field from document
             }
         },
         {
@@ -214,6 +214,8 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
         //^ If same, it generates both token again and repeat process of saving RT in Db and set cookie with RT and AT
 
         const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+        // console.log("yha tk pahunclele mai")
+
 
         if(!incomingRefreshToken)
             throw new ApiError(401, "unauthorized request")
@@ -224,11 +226,11 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
                 process.env.REFRESH_TOKEN_SECRET
             )
     
-            const user = await User.findById(decodedToken?.id)
+            const user = await User.findById(decodedToken?._id)
             if(!user)
                 throw new ApiError(401, "Invalid Refresh Token")
     
-            if(incomingRefreshToken !== User?.refreshToken)
+            if(incomingRefreshToken !== user?.refreshToken)
                 throw new ApiError(401, "Refresh token is expired or used")
             
             const options = {
@@ -237,7 +239,7 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
             }
             
             const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
-    
+
             return res
             .status(200)
             .cookie("accessToken", accessToken, options)
@@ -252,7 +254,7 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
                 )
             )
         } catch (error) {
-            throw new ApiError(error?.message || "invalid refreshToken")
+            throw new ApiError(401, error?.message || "invalid refreshToken")
         }
     
     
