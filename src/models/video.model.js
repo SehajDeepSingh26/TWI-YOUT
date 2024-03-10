@@ -59,5 +59,6 @@ const videoSchema = new Schema(
 )
 
 videoSchema.plugin(mongooseAggregatePaginate)       //^ Now we can write aggregate queries as well
+//^ paases only required fields to next call
 
 export const Video = mongoose.model("Video", videoSchema)
